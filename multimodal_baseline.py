@@ -30,15 +30,21 @@ import warnings
 from tensorflow.keras.backend import clear_session
 from tensorflow.keras.metrics import AUC, Precision, Recall
 warnings.filterwarnings('ignore')
+import json
+import argparse
 
-def create_dataset(dict_of_ner):
+def create_dataset(dict_of_ner,emb_type):
     temp_data = []
     for k, v in dict_of_ner.items():
         temp = []
         for embed in v:
             if np.ndim(embed) > 0:  
                 temp.append(list(embed))
-        mean_embedding = np.mean(temp, axis=0) if temp else np.zeros(100)
+                
+        if emb_type == 'concat':
+            mean_embedding = np.mean(temp, axis=0) if temp else np.zeros(200)
+        else:
+            mean_embedding = np.mean(temp, axis=0) if temp else np.zeros(100)
         temp_data.append(mean_embedding)
 
     return np.asarray(temp_data)
@@ -71,7 +77,7 @@ def save_scores_multi_avg(predictions, probs, ground_truth,
     pd.to_pickle(result_dict, os.path.join(result_path, file_name))
 
     print(auc, auprc, acc, F1)
-    
+
 def avg_ner_model(layer_name, number_of_unit, embedding_name):
 
     if embedding_name == "concat":
@@ -117,7 +123,17 @@ def avg_ner_model(layer_name, number_of_unit, embedding_name):
 def mean(a):
     return sum(a) / len(a)
 
-def main():
+def main(emb_type):
+    metrics = {
+        'roc_auc': {},
+        'val_roc_auc': {},
+        'pr_auc': {},
+        'val_pr_auc': {},
+        'precision': {},
+        'val_precision': {},
+        'recall': {},
+        'val_recall': {}
+        }
     type_of_ner = "new"
 
     x_train_lstm = pd.read_pickle("data/"+type_of_ner+"_x_train.pkl")
@@ -136,10 +152,17 @@ def main():
     dev_ids = pd.read_pickle("data/"+type_of_ner+"_dev_ids.pkl")
     test_ids = pd.read_pickle("data/"+type_of_ner+"_test_ids.pkl")
     
-    embedding_types = ['word2vec']
-    embedding_dict = [ner_word2vec]
+    #embedding_types = ['word2vec']
+    embedding_types = [emb_type]
+    if emb_type == 'word2vec':
+        embedding_dict = [ner_word2vec]
+    elif emb_type == 'fasttext':
+        embedding_dict = [ner_fasttext]
+    else:
+        embedding_dict = [ner_concat]
+        
+        
     target_problems = ['mort_hosp']
-
 
     num_epoch = 100
     model_patience = 5
@@ -148,7 +171,6 @@ def main():
     iter_num = 2
     unit_sizes = [128]
 
-    #layers = ["LSTM", "GRU"]
     layers = ["GRU"]
 
     for each_layer in layers:
@@ -164,9 +186,9 @@ def main():
                 temp_dev_ner = dict((k, ner_word2vec[k]) for k in dev_ids)
                 temp_test_ner = dict((k, ner_word2vec[k]) for k in test_ids)
 
-                x_train_ner = create_dataset(temp_train_ner)
-                x_dev_ner = create_dataset(temp_dev_ner)
-                x_test_ner = create_dataset(temp_test_ner)
+                x_train_ner = create_dataset(temp_train_ner,emb_type)
+                x_dev_ner = create_dataset(temp_dev_ner,emb_type)
+                x_test_ner = create_dataset(temp_test_ner,emb_type)
 
 
                 for iteration in range(1, iter_num):
@@ -197,11 +219,31 @@ def main():
                         save_scores_multi_avg(predictions, probs, y_test[each_problem], 
                                    embed_name, each_problem, iteration, each_unit_size, 
                                    each_layer, type_of_ner)
+                        history_data = history.history
+                        for metric in metrics:
+                            if metric in history_data:
+                                if iteration not in metrics[metric]:
+                                    metrics[metric][iteration] = []
+                                metrics[metric][iteration].extend(history_data[metric])
 
          
-                        clear_session()
+                        #clear_session()
                         gc.collect()
                         
-                        
+    # Convert the metrics dictionary to a JSON string
+    metrics_json = json.dumps(metrics)
+
+    # Save the JSON s/tring to a file
+    with open(f'results/section8_metrics{emb_type}.json', 'w') as f:
+        f.write(metrics_json)                       
 if __name__ == "__main__":
-    main()
+    #main()
+    parser = argparse.ArgumentParser(description="Train a model with specified embedding type.")
+    
+    parser.add_argument('--embedding_type', type=str, default='word2vec',
+                        choices=['word2vec', 'fasttext', 'concat'],
+                        help='Type of word embedding to use')
+
+    args = parser.parse_args()
+
+    main(args.embedding_type)

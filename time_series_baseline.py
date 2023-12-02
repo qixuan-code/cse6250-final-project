@@ -31,7 +31,7 @@ import warnings
 from tensorflow.keras import backend as K
 import gc
 warnings.filterwarnings('ignore')
-
+import json
 
 # Reset Keras Session
 def reset_keras(model):
@@ -74,7 +74,7 @@ def save_scores_timeseries(predictions, probs, ground_truth, model_name,
     pd.to_pickle(result_dict, os.path.join(result_path, file_name))
 
     print(auc, auprc, acc, F1)
-    
+
 def timeseries_model(layer_name, number_of_unit):
     K.clear_session()
     
@@ -131,6 +131,16 @@ def timeseries_model(layer_name, number_of_unit):
 
 
 def main():
+    metrics = {
+        'roc_auc': {},
+        'val_roc_auc': {},
+        'pr_auc': {},
+        'val_pr_auc': {},
+        'precision': {},
+        'val_precision': {},
+        'recall': {},
+        'val_recall': {}
+    }
     type_of_ner = "new"
 
     x_train_lstm = pd.read_pickle("data/"+type_of_ner+"_x_train.pkl")
@@ -178,9 +188,22 @@ def main():
                     probs, predictions = make_prediction_timeseries(model, x_test_lstm) 
                     save_scores_timeseries(predictions, probs, y_test[each_problem].values,str(each_layer),
                                            each_problem, iteration, each_unit_size,type_of_ner) 
+                    
+                    history_data = history.history
+                    for metric in metrics:
+                        if metric in history_data:
+                            if iteration not in metrics[metric]:
+                                metrics[metric][iteration] = []
+                            metrics[metric][iteration].extend(history_data[metric])
                     reset_keras(model)
                     gc.collect()
-                    
-                    
+   
+    # Convert the metrics dictionary to a JSON string
+    metrics_json = json.dumps(metrics)
+
+    # Save the JSON s/tring to a file
+    with open('results/section7_metrics.json', 'w') as f:
+        f.write(metrics_json)
+
 if __name__ == "__main__":
     main()
