@@ -273,6 +273,13 @@ def main(emb_type):
                 probs, predictions = make_prediction_cnn(model, [x_test_lstm, x_test_ner])
                 save_scores_cnn(predictions, probs, y_test[each_problem], embed_name, each_problem, iteration,
                                 sequence_hidden_unit, sequence_model, type_of_ner)
+                
+                history_data = history.history
+                for metric in metrics:
+                    if metric in history_data:
+                        if iteration not in metrics[metric]:
+                            metrics[metric][iteration] = []
+                        metrics[metric][iteration].extend(history_data[metric])
                 del model
                 clear_session()
                 gc.collect()
