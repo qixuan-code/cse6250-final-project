@@ -2,12 +2,12 @@
 
 ## Data acquisition:
 ##### note: files from MIMIC can only be accessed with proper training
-- step 1: Run MIMIC-Extract Pipeline as explained in https://github.com/MLforHealth/MIMIC_Extract. or you can get the output file all_hourly_data.h5 from here [https://console.cloud.google.com/storage/browser/mimic_extract;tab=objects?prefix=&forceOnObjectsSortingFiltering=false] under data folder
+- step 1: Run MIMIC-Extract Pipeline as explained in https://github.com/MLforHealth/MIMIC_Extract. or you can get the output file all_hourly_data.h5 from [here](https://console.cloud.google.com/storage/browser/mimic_extract;tab=objects?prefix=&forceOnObjectsSortingFiltering=false). Download it under data folder
 
 - step 2: Copy the ADMISSIONS.csv, NOTEEVENTS.csv, ICUSTAYS.csv files into data folder.
 
--step 3: Download Pre-trained Word2Vec & FastText embeddings: https://github.com/kexinhuang12345/clinicalBERT
-under embeddings folder
+- step 3: Download Pre-trained Word2Vec & FastText embeddings: https://github.com/kexinhuang12345/clinicalBERT
+download it under embeddings folder
 
 ## Data Preprocessing (Steps 01 to 06):
 ##### note: those data preprocess steps are strictly followed, which is provided by author to ensure reproducability
