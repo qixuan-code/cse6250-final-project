@@ -168,7 +168,7 @@ def main(emb_type):
     model_patience = 5
     monitor_criteria = 'val_loss'
     batch_size = 64
-    iter_num = 2
+    iter_num = 11
     unit_sizes = [128]
 
     layers = ["GRU"]
@@ -230,10 +230,9 @@ def main(emb_type):
                         #clear_session()
                         gc.collect()
                         
-    # Convert the metrics dictionary to a JSON string
+
     metrics_json = json.dumps(metrics)
 
-    # Save the JSON s/tring to a file
     with open(f'results/section8_metrics{emb_type}.json', 'w') as f:
         f.write(metrics_json)                       
 if __name__ == "__main__":

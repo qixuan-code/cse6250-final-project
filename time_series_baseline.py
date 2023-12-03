@@ -33,7 +33,7 @@ import gc
 warnings.filterwarnings('ignore')
 import json
 
-# Reset Keras Session
+
 def reset_keras(model):
     sess = get_session()
     clear_session()
@@ -41,11 +41,11 @@ def reset_keras(model):
     sess = get_session()
 
     try:
-        del model # this is from global space - change this as you need
+        del model 
     except:
         pass
 
-    gc.collect() # if it's done something you should see a number being outputted
+    gc.collect() 
 
 def make_prediction_timeseries(model, test_data):
     probs = model.predict(test_data)
@@ -99,7 +99,7 @@ def timeseries_model(layer_name, number_of_unit):
 
 
 def timeseries_model(layer_name, number_of_unit):
-    # Clear session, useful to prevent clutter from old models/layers.
+
     tf.keras.backend.clear_session()
     
     sequence_input = Input(shape=(24,104),  name = "timeseries_input")
@@ -109,7 +109,7 @@ def timeseries_model(layer_name, number_of_unit):
     else:
         x = GRU(number_of_unit)(sequence_input)
     
-    # Replacing tf.contrib.layers with tf.keras alternatives
+
     logits_regularizer = tf.keras.regularizers.l2(l=0.01)
     sigmoid_pred = Dense(
         1, 
@@ -156,7 +156,7 @@ def main():
     batch_size = 128
 
     unit_sizes = [128]
-    iter_num = 5
+    iter_num =11
     target_problems = ['mort_hosp']
     layers = ["GRU"]
     
@@ -198,10 +198,8 @@ def main():
                     reset_keras(model)
                     gc.collect()
    
-    # Convert the metrics dictionary to a JSON string
     metrics_json = json.dumps(metrics)
 
-    # Save the JSON s/tring to a file
     with open('results/section7_metrics.json', 'w') as f:
         f.write(metrics_json)
 
